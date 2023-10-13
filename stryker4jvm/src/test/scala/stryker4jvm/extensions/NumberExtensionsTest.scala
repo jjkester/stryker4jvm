@@ -1,7 +1,7 @@
 package stryker4jvm.extensions
 
-import stryker4jvm.extensions.NumberExtensions.RoundDecimalsExtension
-import stryker4jvm.testutil.Stryker4jvmSuite
+import stryker4s.extension.NumberExtensions.*
+import stryker4s.testutil.Stryker4sSuite
 
 class NumberExtensionsTest extends Stryker4jvmSuite {
 

@@ -1,10 +1,10 @@
-package stryker4jvm.testutil
+package stryker4s.testutil
 
 import pureconfig.ConfigSource
 
 import java.nio.file.Paths
 
-/** Example stryker4jvm configurations for testing purposes
+/** Example stryker4s configurations for testing purposes
   */
 object ExampleConfigs {
 

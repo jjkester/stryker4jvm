@@ -44,6 +44,7 @@ class MutantMatcherTest extends Stryker4jvmSuite {
   )(implicit expectedName: String): Unit = {
     val found = tree.collect(matchFun).map(_(PlaceableTree(tree.body)))
 
+    found should have length expectedTerms.length.toLong
     expectedTerms.foreach(expectedTerm => expectMutations(found, original, expectedTerm))
   }
 

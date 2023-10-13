@@ -36,7 +36,7 @@ class Mutator(
     config: Config,
     log: FansiLogger
 ) {
-  def go(files: Stream[IO, Path]): IO[(MutantResultsPerFile, Seq[MutatedFile])] = {
+  def go(files: Stream[IO, Path]): IO[(MutantResultsPerFile, Vector[MutatedFile])] = {
     files
       // Parse and mutate files
       .parEvalMap(config.concurrency) { path =>

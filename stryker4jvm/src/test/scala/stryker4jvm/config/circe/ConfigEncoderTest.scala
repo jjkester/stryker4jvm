@@ -3,11 +3,9 @@ package stryker4jvm.config.circe
 import fs2.io.file.Path
 import io.circe.Json.*
 import io.circe.syntax.*
-import stryker4jvm.config.*
-import stryker4jvm.testutil.Stryker4jvmSuite
 import org.scalactic.source.Position
-import stryker4jvm.core.config.LanguageMutatorConfig
-import java.util
+import stryker4s.config.*
+import stryker4s.testutil.Stryker4sSuite
 
 class ConfigEncoderTest extends Stryker4jvmSuite {
   val workspaceLocation = Path("workspace").absolute.toString

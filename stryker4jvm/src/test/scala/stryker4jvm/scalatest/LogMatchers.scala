@@ -20,8 +20,7 @@ trait LogMatchers extends BeforeAndAfterEach {
     */
   def printLogs: Boolean = false
 
-  val testLogger = new TestLogger(printLogs)
-  implicit val log: FansiLogger = new FansiLogger(testLogger)
+  implicit val testLogger: TestLogger = new TestLogger(printLogs)
 
   override protected def afterEach(): Unit = {
     try super.afterEach()

@@ -34,7 +34,7 @@ class MavenTestRunnerTest extends Stryker4jvmSuite with MockitoSugar {
       val mockResult = mock[InvocationResult]
       when(mockResult.getExitCode).thenReturn(1)
       when(invokerMock.execute(any[InvocationRequest])).thenReturn(mockResult)
-      val sut = new MavenTestRunner(new MavenProject(), invokerMock, properties, goals)
+      val sut = new MavenTestRunner(new MavenProject(), invokerMock, properties, goals, tmpDir)
 
       val result = sut.initialTestRun().unsafeRunSync()
 
@@ -47,7 +47,7 @@ class MavenTestRunnerTest extends Stryker4jvmSuite with MockitoSugar {
       when(mockResult.getExitCode).thenReturn(0)
       when(invokerMock.execute(any[InvocationRequest])).thenReturn(mockResult)
       val captor = ArgCaptor[InvocationRequest]
-      val sut = new MavenTestRunner(new MavenProject(), invokerMock, properties, goals)
+      val sut = new MavenTestRunner(new MavenProject(), invokerMock, properties, goals, tmpDir)
 
       val result = sut.initialTestRun().unsafeRunSync()
 
@@ -67,7 +67,7 @@ class MavenTestRunnerTest extends Stryker4jvmSuite with MockitoSugar {
       val profile = new Profile()
       profile.setId("best-profile-ever")
       mavenProject.getActiveProfiles.add(profile)
-      val sut = new MavenTestRunner(mavenProject, invokerMock, properties, goals)
+      val sut = new MavenTestRunner(mavenProject, invokerMock, properties, goals, tmpDir)
 
       sut.initialTestRun().unsafeRunSync()
 
@@ -83,7 +83,7 @@ class MavenTestRunnerTest extends Stryker4jvmSuite with MockitoSugar {
       val mockResult = mock[InvocationResult]
       when(mockResult.getExitCode).thenReturn(1)
       when(invokerMock.execute(any[InvocationRequest])).thenReturn(mockResult)
-      val sut = new MavenTestRunner(new MavenProject(), invokerMock, properties, goals)
+      val sut = new MavenTestRunner(new MavenProject(), invokerMock, properties, goals, tmpDir)
 
       val result = sut.runMutant(createMutant, coverageTestNames).unsafeRunSync()
 
@@ -95,7 +95,7 @@ class MavenTestRunnerTest extends Stryker4jvmSuite with MockitoSugar {
       val mockResult = mock[InvocationResult]
       when(mockResult.getExitCode).thenReturn(0)
       when(invokerMock.execute(any[InvocationRequest])).thenReturn(mockResult)
-      val sut = new MavenTestRunner(new MavenProject(), invokerMock, properties, goals)
+      val sut = new MavenTestRunner(new MavenProject(), invokerMock, properties, goals, tmpDir)
 
       val result = sut.runMutant(createMutant, coverageTestNames).unsafeRunSync()
 
@@ -111,7 +111,7 @@ class MavenTestRunnerTest extends Stryker4jvmSuite with MockitoSugar {
       val project = new MavenProject()
       project.getProperties().setProperty("surefire.skipAfterFailureCount", "1")
 
-      val sut = new MavenTestRunner(project, invokerMock, project.getProperties(), goals)
+      val sut = new MavenTestRunner(project, invokerMock, project.getProperties(), goals, tmpDir)
 
       sut.runMutant(createMutant, coverageTestNames).unsafeRunSync()
 
@@ -122,6 +122,7 @@ class MavenTestRunnerTest extends Stryker4jvmSuite with MockitoSugar {
       invokedRequest.isBatchMode should be(true)
       invokedRequest.getProperties.getProperty("surefire.skipAfterFailureCount") should equal("1")
       invokedRequest.getProperties.getProperty("test") shouldBe null
+      invokedRequest.getBaseDirectory() should equal(tmpDir.toNioPath.toFile())
     }
 
     it("should propagate active profiles") {
@@ -134,7 +135,7 @@ class MavenTestRunnerTest extends Stryker4jvmSuite with MockitoSugar {
       val profile = new Profile()
       profile.setId("best-profile-ever")
       mavenProject.getActiveProfiles.add(profile)
-      val sut = new MavenTestRunner(mavenProject, invokerMock, properties, goals)
+      val sut = new MavenTestRunner(mavenProject, invokerMock, properties, goals, tmpDir)
 
       sut.runMutant(createMutant, coverageTestNames).unsafeRunSync()
 

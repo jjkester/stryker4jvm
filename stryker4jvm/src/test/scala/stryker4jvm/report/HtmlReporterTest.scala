@@ -70,7 +70,7 @@ class HtmlReporterTest extends Stryker4jvmIOSuite with MockitoIOSuite with LogMa
         .writeReportJsTo(testFile, runResults)
         .map { _ =>
           val expectedJs =
-            """document.querySelector('mutation-test-report-app').report = {"$schema":"https://git.io/mutation-testing-schema","schemaVersion":"1","thresholds":{"high":100,"low":0},"files":{}}"""
+            """document.querySelector('mutation-test-report-app').report = {"$schema":"https://git.io/mutation-testing-schema","schemaVersion":"2","thresholds":{"high":100,"low":0},"files":{}}"""
           verify(mockFileIO).createAndWrite(testFile, expectedJs)
         }
         .assertNoException

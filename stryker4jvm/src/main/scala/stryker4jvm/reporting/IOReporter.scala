@@ -23,8 +23,3 @@ final case class FinishedRunEvent(
     duration: FiniteDuration,
     reportsLocation: Path
 )
-
-//class ReporterWrapper[C](val reporter: Reporter[C]) extends IOReporter[C] {
-//  override def mutantTested: Pipe[IO, MutantTestedEvent, Nothing] = in => in.map(reporter.mutantTested).drain
-//  override def onRunFinished(runReport: FinishedRunEvent[C]): IO[Unit] = IO(reporter.onRunFinished(runReport))
-//}

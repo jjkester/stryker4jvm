@@ -1,8 +1,9 @@
 package stryker4jvm.config
 
+import stryker4s.config.TestFilter.wildcardToRegex
+
 import java.util.regex.Pattern
 import scala.util.Try
-import stryker4jvm.config.TestFilter.wildcardToRegex
 
 class TestFilter()(implicit config: Config) {
 

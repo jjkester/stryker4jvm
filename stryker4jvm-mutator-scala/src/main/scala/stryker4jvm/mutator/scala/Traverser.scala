@@ -1,10 +1,8 @@
 package stryker4jvm.mutator.scala
 
-import cats.syntax.flatMap.*
 import cats.syntax.option.*
-import stryker4jvm.mutator.scala.extensions.TreeExtensions.{FindExtension, TreeIsInExtension}
-import stryker4jvm.mutator.scala.extensions.mutationtype.ParentIsTypeLiteral
-import stryker4jvm.core.logging.Logger
+import stryker4s.extension.TreeExtensions.{FindExtension, TreeIsInExtension}
+import stryker4s.extension.mutationtype.ParentIsTypeLiteral
 
 import scala.meta.*
 
@@ -16,7 +14,7 @@ trait Traverser {
 
 }
 
-final class TraverserImpl(implicit log: Logger) extends Traverser {
+final class TraverserImpl() extends Traverser {
 
   def canPlace(currentTree: Tree): Option[Term] = {
     val toPlace = currentTree match {
@@ -49,7 +47,5 @@ final class TraverserImpl(implicit log: Logger) extends Traverser {
         case _                     => true
       }
       .filterNot(_.isIn[Mod.Annot])
-      .flatTap(t => log.debug(s"Found tree to place mutations: ${fansi.Color.Green(t.syntax)}").some)
-
   }
 }

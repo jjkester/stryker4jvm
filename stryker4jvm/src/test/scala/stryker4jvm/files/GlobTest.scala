@@ -3,7 +3,9 @@ package stryker4jvm.files
 import fs2.io.file.Path
 import stryker4jvm.testutil.Stryker4jvmSuite
 
-class GlobTest extends Stryker4jvmSuite {
+import scala.util.Properties
+
+class GlobTest extends Stryker4sSuite {
   describe("matcher") {
 
     val path = Path("").absolute
@@ -102,7 +104,7 @@ class GlobTest extends Stryker4jvmSuite {
     val linuxOnlySequences = Seq("*", "?")
 
     val allSequences =
-      if (sys.props("os.name").toLowerCase.contains("windows")) escapeSequences
+      if (Properties.isWin) escapeSequences
       else escapeSequences ++ linuxOnlySequences
 
     allSequences.foreach { escapeSequence =>

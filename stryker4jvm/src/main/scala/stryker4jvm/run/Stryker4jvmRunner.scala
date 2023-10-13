@@ -28,12 +28,15 @@ abstract class Stryker4jvmRunner(implicit log: FansiLogger) {
     val createTestRunnerPool = (path: Path) => resolveTestRunners(path).map(ResourcePool(_))
     val reporter = new AggregateReporter(resolveReporters())
 
-    val stryker4jvm = new Stryker4jvm(
+    val instrumenter = new MutantInstrumenter(instrumenterOptions)
+    val stryker4s = new Stryker4s(
       resolveMutatesFileSource,
       new Mutator(
-        SupportedLanguageMutators.supportedMutators(config.mutatorConfigs, log, instrumenterOptions)
+        new MutantFinder(),
+        new MutantCollector(new TraverserImpl(), new MutantMatcherImpl()),
+        instrumenter
       ),
-      new MutantRunner(createTestRunnerPool, resolveFilesFileSource, new RollbackHandler(), reporter),
+      new MutantRunner(createTestRunnerPool, resolveFilesFileSource, new RollbackHandler(instrumenter), reporter),
       reporter
     )
 
@@ -69,7 +72,7 @@ abstract class Stryker4jvmRunner(implicit log: FansiLogger) {
                 )
               )
           }
-        new DashboardReporter(new DashboardConfigProvider(sys.env))
+        new DashboardReporter(new DashboardConfigProvider[IO]())
     }
 
   def resolveTestRunners(tmpDir: Path)(implicit

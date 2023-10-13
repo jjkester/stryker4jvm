@@ -3,9 +3,13 @@ package stryker4jvm.extensions
 import stryker4jvm.extensions.DurationExtensions.*
 import stryker4jvm.testutil.Stryker4jvmSuite
 
+import stryker4s.testutil.Stryker4sSuite
+
 import scala.concurrent.duration.*
 
-class DurationExtensionsTest extends Stryker4jvmSuite {
+import DurationExtensions.*
+
+class DurationExtensionsTest extends Stryker4sSuite {
   describe("toHumanReadable") {
     it("should parse 1 second") {
       1.second.toHumanReadable shouldBe "1 second"

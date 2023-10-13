@@ -89,17 +89,15 @@ protected trait NoInvalidPlacement[T <: Tree] {
         case ParentIsTypeLiteral() => true
         case _                     => false
       }
-  }
 }
 
-private[stryker4jvm] case object ParentIsTypeLiteral {
-  def unapply(t: Tree): Boolean = {
-    t.parent.exists {
-      case Defn.Val(_, _, Some(`t`), _)       => true
-      case Defn.Var(_, _, Some(`t`), _)       => true
-      case Defn.Def(_, _, _, _, Some(`t`), _) => true
-      case Defn.Type(_, _, _, `t`)            => true
-      case p                                  => p.is[Type] || p.is[Term.ApplyType]
-    }
+private[stryker4s] case object ParentIsTypeLiteral {
+  def unapply(t: Tree): Boolean = t.parent.exists {
+    case Type.ArgClause(expprs) if expprs.contains(t) => true
+    case Defn.Val(_, _, Some(`t`), _)                 => true
+    case Defn.Var.Initial(_, _, Some(`t`), _)         => true
+    case Defn.Def.Initial(_, _, _, _, Some(`t`), _)   => true
+    case Defn.Type.Initial(_, _, _, `t`)              => true
+    case p                                            => p.is[Type] || p.is[Term.ApplyType]
   }
 }

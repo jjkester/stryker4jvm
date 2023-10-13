@@ -6,7 +6,7 @@ import stryker4jvm.config.Config
 import stryker4jvm.logging.FansiLogger
 
 import scala.sys.process.{Process, ProcessLogger}
-import scala.util.Try
+import scala.util.{Properties, Try}
 
 abstract class ProcessRunner(implicit log: FansiLogger) {
   def apply(command: Command, workingDir: Path): Try[Seq[String]] = {
@@ -34,10 +34,9 @@ abstract class ProcessRunner(implicit log: FansiLogger) {
 }
 
 object ProcessRunner {
-  private def isWindows: Boolean = sys.props("os.name").toLowerCase.contains("windows")
 
-  def apply()(implicit log: FansiLogger): ProcessRunner = {
-    if (isWindows) new WindowsProcessRunner
+  def apply()(implicit log: Logger): ProcessRunner = {
+    if (Properties.isWin) new WindowsProcessRunner
     else new UnixProcessRunner
   }
 }

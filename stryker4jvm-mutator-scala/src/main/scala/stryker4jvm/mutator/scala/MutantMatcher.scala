@@ -228,7 +228,13 @@ class MutantMatcherImpl(var config: LanguageMutatorConfig) extends MutantMatcher
 
   private def isSupressWarningsAnnotation(mod: Mod, mutationName: String): Boolean = {
     mod match {
-      case Mod.Annot(Init(Type.Name("SuppressWarnings"), _, List(List(Term.Apply(Name("Array"), params))))) =>
+      case Mod.Annot(
+            Init.After_4_6_0(
+              Type.Name("SuppressWarnings"),
+              _,
+              List(Term.ArgClause(List(Term.Apply.After_4_6_0(Name("Array"), Term.ArgClause(params, _))), _))
+            )
+          ) =>
         params.exists {
           case Lit.String(`mutationName`) => true
           case _                          => false

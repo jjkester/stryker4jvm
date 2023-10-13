@@ -1,4 +1,6 @@
-import io.github.davidgregory084.*
+import org.typelevel.sbt.tpolecat.*
+import org.typelevel.scalacoptions.*
+import TpolecatPlugin.autoImport.*
 import Release.*
 import io.github.davidgregory084.TpolecatPlugin.autoImport.*
 import sbt.Keys.*
@@ -26,8 +28,8 @@ object Settings {
         case _                       => sourceDir / "scala-2.13+"
       }
     },
-    scalacOptions ++= Seq("-unchecked"),
-    tpolecatScalacOptions += ScalacOption("-Xsource:3", _.major == 2)
+    tpolecatScalacOptions += ScalacOptions.source3,
+    Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
   )
 
   lazy val jvmSettings: Seq[Setting[?]] = Seq(
@@ -86,7 +88,9 @@ object Settings {
     Compile / PB.targets := Seq(
       scalapb.gen(grpc = false, lenses = false) -> (Compile / sourceManaged).value / "scalapb"
     ),
-    libraryDependencies += Dependencies.scalapbRuntime
+    libraryDependencies += Dependencies.scalapbRuntime,
+    // Disable warnings for discarded non-Unit value results, as they are used in the generated code
+    Compile / tpolecatExcludeOptions += ScalacOptions.warnValueDiscard
   )
 
   lazy val buildLevelSettings: Seq[Setting[?]] = inThisBuild(
@@ -95,7 +99,8 @@ object Settings {
   )
 
   lazy val buildInfo: Seq[Def.Setting[?]] = Seq(
-    tpolecatReleaseModeEnvVar := "CI_RELEASE",
+    // Fatal warnings only in CI
+    tpolecatCiModeEnvVar := "CI",
     tpolecatDefaultOptionsMode := DevMode,
     // Prevent version clash warnings when running Stryker4jvm on a locally-published Stryker4jvm
     libraryDependencySchemes ++= Seq(

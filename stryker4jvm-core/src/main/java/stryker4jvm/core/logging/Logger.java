@@ -97,7 +97,7 @@ public abstract class Logger {
    */
   protected boolean determineColorEnabled() {
     // Explicitly disable color https://no-color.org/
-    boolean notNoColor = System.getenv().containsKey("NO_COLOR");
+    boolean notNoColor = !System.getenv().containsKey("NO_COLOR");
     // If there is a TERM on Linux (or Windows Git Bash), assume we support color
     boolean unixEnabled = System.getenv().containsKey("TERM");
     // On Windows there's no easy way. But if we're in Windows Terminal or ConEmu, we can assume we

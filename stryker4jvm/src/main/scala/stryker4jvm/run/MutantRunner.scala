@@ -3,22 +3,22 @@ package stryker4jvm.run
 import cats.data.{EitherT, NonEmptyList}
 import cats.effect.{IO, Resource}
 import cats.syntax.all.*
+import fansi.Color
 import fs2.io.file.{Files, Path}
 import fs2.{text, Pipe, Stream}
 import mutationtesting.{MutantResult, MutantStatus}
-import stryker4jvm.config.Config
-import stryker4jvm.core.model.{AST, MutantWithId}
-import stryker4jvm.exception.{InitialTestRunFailedException, UnableToFixCompilerErrorsException}
-import stryker4jvm.extensions.FileExtensions.PathExtensions
-import stryker4jvm.extensions.MutantExtensions.ToMutantResultExtension
-import stryker4jvm.files.FilesFileResolver
-import stryker4jvm.logging.FansiLogger
-import stryker4jvm.model.*
-import stryker4jvm.reporting.{IOReporter, MutantTestedEvent}
+import stryker4s.config.Config
+import stryker4s.extension.FileExtensions.*
+import stryker4s.extension.exception.{InitialTestRunFailedException, UnableToFixCompilerErrorsException}
+import stryker4s.files.FilesFileResolver
+import stryker4s.log.Logger
+import stryker4s.model.*
+import stryker4s.report.{MutantTestedEvent, Reporter}
 
 import java.nio
 import scala.collection.immutable.SortedMap
-import scala.collection.mutable
+import scala.collection.mutable.Builder
+import scala.meta.Tree
 
 class MutantRunner(
     createTestRunnerPool: Path => Either[NonEmptyList[CompilerErrMsg], Resource[IO, TestRunnerPool]],
@@ -27,7 +27,7 @@ class MutantRunner(
     reporter: IOReporter
 )(implicit config: Config, log: FansiLogger) {
 
-  def apply(mutatedFiles: Seq[MutatedFile]): IO[RunResult] = {
+  def apply(mutatedFiles: Vector[MutatedFile]): IO[RunResult] = {
 
     val withRollback = handleRollback(mutatedFiles)
 
@@ -35,22 +35,21 @@ class MutantRunner(
 
   }
 
-  def handleRollback(mutatedFiles: Seq[MutatedFile]): IO[RunResult] =
+  def handleRollback(mutatedFiles: Vector[MutatedFile]) =
     EitherT(run(mutatedFiles))
       .leftFlatMap { errors =>
-        log.info(s"Attempting to remove ${errors.size} mutants that gave a compile error...")
+        log.info(s"Attempting to remove ${errors.size} mutant(s) that gave a compile error...")
         // Retry once with the non-compiling mutants removed
         EitherT(
           rollbackHandler
-            .rollbackFiles()
-            // TODO: handle rollbacks in a different place
+            .rollbackFiles(errors, mutatedFiles)
             .flatTraverse { case RollbackResult(newFiles, rollbackedMutants) =>
               run(newFiles).map { result =>
                 result.map { r =>
+                  // Combine the results of the run with the results of the rollbacked mutants
                   r.copy(results = r.results.alignCombine(rollbackedMutants))
                 }
               }
-
             }
         )
       }
@@ -74,9 +73,9 @@ class MutantRunner(
   def prepareEnv(mutatedFiles: Seq[MutatedFile]): Resource[IO, Path] = {
     val targetDir = config.baseDir / "target"
     for {
-      _ <- Resource.eval(Files[IO].createDirectories(targetDir))
+      _ <- Files[IO].createDirectories(targetDir).toResource
       tmpDir <- prepareTmpDir(targetDir)
-      _ <- Resource.eval(setupFiles(tmpDir, mutatedFiles.toSeq))
+      _ <- setupFiles(tmpDir, mutatedFiles.toSeq).toResource
     } yield tmpDir
   }
 
@@ -95,19 +94,11 @@ class MutantRunner(
       if (config.cleanTmpDir) {
         Files[IO].deleteRecursively(tmpDir)
       } else {
-        IO(
-          log.info(
-            s"Not deleting $tmpDir (turn off cleanTmpDir to disable this). Please clean it up manually."
-          )
-        )
+        IO(log.info(s"Not deleting $tmpDir (turn off cleanTmpDir to disable this). Please clean it up manually."))
       }
     case (tmpDir, _: Resource.ExitCase.Errored) =>
       // Enable the user do some manual actions before she retries.
-      IO(
-        log.warn(
-          s"Not deleting $tmpDir after error. Please clean it up manually."
-        )
-      )
+      IO(log.warn(s"Not deleting $tmpDir after error. Please clean it up manually."))
   }
 
   private def setupFiles(tmpDir: Path, mutatedFiles: Seq[MutatedFile]): IO[Unit] =
@@ -143,7 +134,11 @@ class MutantRunner(
           .createDirectories(targetPath.parent.get)
           .as((mutatedFile, targetPath))
     }.map { case (mutatedFile, targetPath) =>
-      Stream(mutatedFile.mutatedSource.syntax)
+      Stream(
+        Tree
+          .showSyntax(config.scalaDialect)(mutatedFile.mutatedSource)
+          .toString()
+      )
         .covary[IO]
         .through(text.utf8.encode)
         .through(Files[IO].writeAll(targetPath))
@@ -161,12 +156,10 @@ class MutantRunner(
     val (noCoverageMutants, testableMutants) =
       rest.partition(m => coverageExclusions.hasCoverage && !coverageExclusions.coveredMutants.contains(m._2.id))
 
-    // val compilerErrorMutants =
-    //   mutatedFiles.flatMap(m => m.nonCompilingMutants.toList.map(m.fileOrigin.relativePath -> _))
-
     if (noCoverageMutants.nonEmpty) {
       log.info(
-        s"${noCoverageMutants.size} mutants detected as having no code coverage. They will be skipped and marked as NoCoverage"
+        s"${noCoverageMutants.size} mutant(s) detected as having no code coverage. They will be skipped and marked as ${Color
+            .Magenta("NoCoverage")}"
       )
       log.debug(s"NoCoverage mutant ids are: ${noCoverageMutants.map(_._2.id).mkString(", ")}")
     }
@@ -177,14 +170,6 @@ class MutantRunner(
       )
       log.debug(s"Static mutant ids are: ${staticMutants.map(_._2.id).mkString(", ")}")
     }
-
-    // TODO: move logging of compile-errors
-    // if (compilerErrorMutants.nonEmpty) {
-    //   log.info(
-    //     s"${compilerErrorMutants.size} mutants gave a compiler error. They will be marked as such in the report."
-    //   )
-    //   log.debug(s"Non-compiling mutant ids are: ${compilerErrorMutants.map(_._2.id.value).mkString(", ")}")
-    // }
 
     def mapPureMutants[K, V, VV](l: Seq[(K, V)], f: V => VV) =
       Stream.emits(l).map { case (k, v) => k -> f(v) }

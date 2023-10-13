@@ -1,4 +1,4 @@
-package stryker4jvm.run.process
+package stryker4s.run.process
 
 import cats.effect.{IO, Resource}
 

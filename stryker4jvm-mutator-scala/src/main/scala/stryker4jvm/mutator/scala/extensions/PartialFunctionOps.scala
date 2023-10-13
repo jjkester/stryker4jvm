@@ -1,7 +1,7 @@
 package stryker4jvm.mutator.scala.extensions
 
-import cats.{Monoid, Semigroup}
 import cats.syntax.semigroup.*
+import cats.{Monoid, Semigroup}
 
 object PartialFunctionOps {
 

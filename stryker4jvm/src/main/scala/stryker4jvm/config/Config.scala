@@ -35,8 +35,6 @@ object Config extends pure.ConfigConfigReader with circe.ConfigEncoder {
 
   def concurrencyFor(cpuCoreCount: Int): Int = {
     // Use (n / 4 concurrency, rounded) + 1
-    if (cpuCoreCount > 4) cpuCoreCount / 2
-    else cpuCoreCount
     (cpuCoreCount.toDouble / 4).round.toInt + 1
   }
 
