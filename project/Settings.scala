@@ -2,7 +2,6 @@ import org.typelevel.sbt.tpolecat.*
 import org.typelevel.scalacoptions.*
 import TpolecatPlugin.autoImport.*
 import Release.*
-import io.github.davidgregory084.TpolecatPlugin.autoImport.*
 import sbt.Keys.*
 import sbt.ScriptedPlugin.autoImport.{scriptedBufferLog, scriptedLaunchOpts}
 import sbt.*
